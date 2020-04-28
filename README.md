@@ -368,16 +368,22 @@ The different configuration are summed up in the following table:
 
 </div>
 
-## Simulations Scripts (unix-like)
+### Simulations Script (unix-like)
 
-As mentionned above, the [simu](spook_msk/simu) contains the :
+As mentionned above, the [simu](spook_msk/simu) contains the simulation script 
+[sim_spook_MSK](spook_msk/simu/sim_spook_MSK.sh). The later proceeds to the following operations:
 
-+ **Testvectors generation**: this process is generating the different commands that will be sent to the 
-core based on the file specified. The latter should be formatted similarly to the NIST LWC testvectors files. 
-+ **Synthesis** *(optional)*: the design is synthetized using Yosys.
++ **Testvectors generation**: this process is generates the different commands that will be sent to the 
+core based on the file specified. The latter should be formatted similarly to the NIST LWC testvectors files.
+This is done using the [gen_tv](spook_msk/spook_hw_api/gen_tv.py) script. 
 + **Simulation file building**: the simulation file is built using Iverilog.
 + **Simulation**: the simulation is performed using vvp.
 
-It may be required to change some scripts configurations. These are chosen at the beginning of each scripts 
+It may be required to change some scripts configurations. These are chosen at the beginning of each files 
 and are thus easily editable. 
+
+## CTF Data Sets
+
+In the context of the challenge, various data sets are available for each targets (i.e., using 2,3 and 4 shares). These sets contain
+power traces as well as the corresponding data processed. 
 
