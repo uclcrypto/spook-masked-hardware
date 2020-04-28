@@ -199,7 +199,7 @@ The expected outputted commands flows for each instruction are shown in the next
  
  <div align="center">
  
-![General Spook Framework](/figures/spook_HW_framework.jpg)
+![General Spook Framework](spook_msk/schematics/spook_HW_framework.jpg)
 
 </div>
 
@@ -220,35 +220,7 @@ It also compute the `data_validity` of each raw data command which is simply a v
 It receives the digested data, encode these according to the API and outputs these. 
 + **Datapath**: This module contains all the circuitry related to the computation required to perform a call of Spook. 
 More particularly, it is composed by raw data holders (e.g., for the long term key), routing 
-logic (i.e., muxes) and the logic for the primitives Shadow and Clyde. 
-
-The protected and unprotected implementations mainly differ by the way the datapath is implemented. 
-We present next the architecctures tor the both flavours. 
-
-
-## Spook Unprotected Architecture (outdated, need to be updated with v2)
-
-Here is described the architecture of the datapth for the unprotected Spook HW core. The latter is 
-optimized in order to reduce the logic cost of both Shadow and Clyde primitives while keeping 
-high performances. 
-
-<div align="center">
- 
-![General Spook Framework](/figures/SpookOpti.jpg)
-
-</div>
-
-For this purpose, the Shadow's Round A and Round B are perfomed in multiple clock cycle
-by operating over 128 parts of the state. The Round A logic is re-used to compute the round function
-of Clyde. In this configuration, the practical cost of Clyde boils down to the logic required to compute
-the tweakey. The tag verification mechanism computes the expected tag value (as for an encryption process) and
-compare its value with the tag candidate received (which is hold in a specific raw data holder). 
-A more detailed explanation can be found in the TOSC paper. 
-
-While the provided code implements the architecture described above, it offers the possiblity to easily modify the 
-serialisation level of the Shadow's Round B. This is done by modifying the generation parameter
-`PDRB` in the [datapath](/Spook_CustomApi/hdl/mode_hdl/datapath.v) file. More info about the
-impact of this parameter can be found in the [primitive core](/Spook_CustomApi/hdl/prim_hdl/prim_core_1R_UMSK_opt_dp.v) file. 
+logic (i.e., muxes) and the logic for the primitives Shadow and Clyde.  
 
 ## Spook Protected Architecture
 
