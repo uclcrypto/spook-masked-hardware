@@ -44,8 +44,8 @@ and linux shell. The following [PyPi](https://pypi.or) packages are required:
 ### Data Formatting
 
 To perform an operation (e.g., encryption or decryption), data are sent to and received from the core according to 
-a specific communication protocol based on sequences of 32bits words (denoted next commands). A command
-is considered as a vector of 32 bits, for which each bits is denoted b<sub>i</sub> (b<sub>0</sub> being the
+a specific communication protocol based on sequences of 32-bit words (denoted next commands). A command
+is considered as a vector of 32-bit, for which each bits is denoted b<sub>i</sub> (b<sub>0</sub> being the
 less significant bit), as shown here:  
 
 <div align="center">
@@ -127,8 +127,8 @@ Putting all together, the following header structure is considered:
 
 **Raw data**
 
-This is the basic command type, representing the raw data sent to the core. In that case, the 32bits 
-are useful bits of the data, the latter being encoded as a sequence of 32bits words.
+This is the basic command type, representing the raw data sent to the core. In that case, the 32 bits
+are useful bits of the data, the latter being encoded as a sequence of 32-bit words.
 
 ### Commands Flows
 
