@@ -1,15 +1,15 @@
 # **Spook Hardware Implementations**
 
-This repository contains all the file relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
+This repository contains all the files relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
 the Hardware Capture the Flag. A practical implementation was done on 
-a [sakura_g board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) to generate the traces 
-datasets (currently avaiable on the [Spook website](https://www.spook.dev/).
+a [sakura_g board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) which was used to generate the
+datasets (currently available on the [Spook website](https://www.spook.dev/)).
 
-The HW core follows an custom API broadly based
+The HW core follows a custom API broadly based
 on the [LWC HW API](https://cryptography.gmu.edu/athena/LWC/LWC_HW_API.pdf) proposed in the context of the 
 LWC NIST competition. We provide a python library that generates from an high level the data that 
 should be sent to the core in order to perform different operations (e.g., load the key, encryption, ...).
-The latter is used to generate the simulations testvectors as well as the practical data use to take the measurements. 
+The latter is used to generate the testvectors used in simulatations as well as the actual FPGA implementation. 
 
 _Note: no security claims comes with this code. It is a straight foward implementation of state-of-the 
 art software masking scheme which security depends on various factors such masking order, independence 
@@ -23,7 +23,7 @@ The repository contains the following directories:
     - [hdl](spook_msk/hdl): HDL files of the implementation.
     - [schematics](spook_msk/schematics): useful schematics of the architecure.
     - [simu](spook_msk/simu): script and workspace for the simulations.
-    - [tb](spook_msk/tb): directory conatining the HW testbenches. 
+    - [tb](spook_msk/tb): directory containing the HW testbenches. 
 + [spook_hw_api](spook_hw_api): scripts to format data according to the HW API (see below)
 
 ## Software dependencies
