@@ -66,6 +66,8 @@ module controller
     to_dp_clyde_pre_enable,
     to_dp_clyde_en_feeding_prng1,
     to_dp_clyde_en_feeding_prng2,
+    to_dp_clyde_lock_feed1,
+    to_dp_clyde_lock_feed2,
     from_dp_clyde_ready_start,
 
     // Encoder ///////////////
@@ -153,6 +155,8 @@ input from_dp_clyde_pre_data_out_valid;
 output to_dp_clyde_pre_enable;
 output to_dp_clyde_en_feeding_prng1;
 output to_dp_clyde_en_feeding_prng2;
+output to_dp_clyde_lock_feed1;
+output to_dp_clyde_lock_feed2;
 input from_dp_clyde_ready_start;
 
 output [3:0] to_encod_dtype;
@@ -237,6 +241,8 @@ spook_core(
     .to_dp_clyde_pre_enable(to_dp_clyde_pre_enable),
     .to_dp_clyde_en_feeding_prng1(to_dp_clyde_en_feeding_prng1),
     .to_dp_clyde_en_feeding_prng2(to_dp_clyde_en_feeding_prng2),
+    .to_dp_clyde_lock_feed1(to_dp_clyde_lock_feed1),
+    .to_dp_clyde_lock_feed2(to_dp_clyde_lock_feed2),
     .from_dp_clyde_ready_start(from_dp_clyde_ready_start),
 
     // Other controllers ///////////

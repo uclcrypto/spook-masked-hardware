@@ -45,6 +45,7 @@ prng_unit #(.SIZE_RND(SIZE_RND_RFSH),.SIZE_GEN(SIZE_RND_GEN),.SIZE_FEED(SIZE_FEE
 prng_core(
     .pre_enable_run(pre_enable_run_prng),
     .pre_rst(pre_rst),
+    .lock_feed(~n_lock_for_seed),
     .clk(clk),
     .feed(feed_prng_seed & data_in_valid),
     .feed_data(data_in),
@@ -52,7 +53,7 @@ prng_core(
     .rnd_out(rnd)
 );
 
-assign pre_enable_run_prng = (~rnd_ready & n_lock_for_seed) | pre_pre_refresh | pre_rst;
+assign pre_enable_run_prng = ~rnd_ready| pre_pre_refresh | pre_rst;
 
 // Key holder unit
 MSKkey_holder #(.d(d),.Nbits(Nbits),.FEED_SIZE(SIZE_FEED))

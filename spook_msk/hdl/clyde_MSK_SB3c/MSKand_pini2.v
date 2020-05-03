@@ -34,13 +34,10 @@ for(i=0; i<d; i=i+1) begin: igen
     end
 end
 
-(* KEEP = "TRUE" *)
-(* DONT_TOUCH = "TRUE" *)
-(* S = "TRUE" *) 
+
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [d-1:0] not_ina = ~ina;
-(* KEEP = "TRUE" *)
-(* DONT_TOUCH = "TRUE" *)
-(* S = "TRUE" *) 
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 reg [d-1:0] inb_prev;
 always @(posedge clk) 
 if(en) begin
@@ -50,17 +47,11 @@ end else begin
 end
 
 for(i=0; i<d; i=i+1) begin: ParProdI
-    (* KEEP = "TRUE" *)
-    (* DONT_TOUCH = "TRUE" *)
-    (* S = "TRUE" *) 
+    (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
     reg [d-2:0] u, v, w;
-    (* KEEP = "TRUE" *)
-    (* DONT_TOUCH = "TRUE" *)
-    (* S = "TRUE" *) 
+    (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *) 
     reg aibi;
-    (* KEEP = "TRUE" *)
-    (* DONT_TOUCH = "TRUE" *)
-    (* S = "TRUE" *) 
+    (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *) 
     wire aibi_comb = ina[i] & inb_prev[i];
     always @(posedge clk) 
     if(en) begin 
@@ -72,17 +63,11 @@ for(i=0; i<d; i=i+1) begin: ParProdI
     for(j=0; j<d; j=j+1) begin: ParProdJ
         if (i != j) begin: NotEq
             localparam j2 = j < i ?  j : j-1;
-            (* KEEP = "TRUE" *)
-            (* DONT_TOUCH = "TRUE" *)
-            (* S = "TRUE" *) 
+            (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *) 
             wire u_j2_comb = not_ina[i] & rnd_mat_prev[i][j];
-            (* KEEP = "TRUE" *)
-            (* DONT_TOUCH = "TRUE" *)
-            (* S = "TRUE" *) 
+            (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *) 
             wire v_j2_comb = inb[j] ^ rnd_mat[i][j];
-            (* KEEP = "TRUE" *)
-            (* DONT_TOUCH = "TRUE" *)
-            (* S = "TRUE" *) 
+            (* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *) 
             wire w_j2_comb = ina[i] & v[j2];
             always @(posedge clk)
             if(en) begin

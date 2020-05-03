@@ -21,9 +21,7 @@ input enable;
 // spook K4D2F2 --> depth 2 and 1 on one input of the 2nd layer and to reduce delay on refresh on the critical-path
 wire [d-1:0] rfrs1, rfrs2, rfrs3, rfrs4, temp_out2, temp_out3;
 // FF on the other AND input and synchronization/pipelining
-(* KEEP = "TRUE" *)
-(* DONT_TOUCH = "TRUE" *)
-(* S = "TRUE" *)
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [d-1:0] x0F, x1F, x2F, x1FF, x2FF, q1F, l1F, l1FF, l2F, q7F, l0F, l0FF, l0FFF, t2F, temp_out2F, temp_out3F;
 wire  [d-1:0] l0, l1, l2, l3, l4, q1, q2, q5, q6, q7, t0, t1, t2, t3, l2xt2;
 

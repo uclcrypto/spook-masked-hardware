@@ -9,8 +9,8 @@ module MSKclyde_128
     parameter PDSBOX = 2,
     parameter PDLBOX = 1,
     parameter Nbits=128,
-    parameter RND_RATE_DIVIDER = 1,
     parameter SIZE_FEED = 32,
+    parameter RND_RATE_DIVIDER = 1,
     parameter ALLOW_SPEED_ARCH=0
 )
 (
@@ -26,8 +26,10 @@ module MSKclyde_128
     pre_enable,
     // PRNG ports //
     feed1,
+    lock_feed1,
     feed_data,
     feed2,
+    lock_feed2,
     ready_start_run
 );
 
@@ -55,8 +57,10 @@ output [Nbits-1:0] data_out;
 output pre_data_out_valid;
 input pre_enable;
 input feed1;
+input lock_feed1;
 input [SIZE_FEED-1:0] feed_data;
 input feed2;
+input lock_feed2;
 output ready_start_run;
 
 // PRNG rnd1 SB //
@@ -69,6 +73,7 @@ prng1(
     .clk(clk),
     .pre_rst(pre_syn_rst),
     .pre_enable_run(pre_enable_run_prng1),
+    .lock_feed(lock_feed1),
     .feed(feed1),
     .feed_data(feed_data),
     .rnd_valid_next_enable(rnd_valid_next_enable1),
@@ -85,6 +90,7 @@ prng2(
     .clk(clk),
     .pre_rst(pre_syn_rst),
     .pre_enable_run(pre_enable_run_prng2),
+    .lock_feed(lock_feed2),
     .feed(feed2),
     .feed_data(feed_data),
     .rnd_valid_next_enable(rnd_valid_next_enable2),
@@ -94,7 +100,9 @@ prng2(
 // Clyde core //
 wire [SIZE_SHARING-1:0] sharing_data_out;
 wire pre_enable_core;
+wire pre_pre_need_rnd1;
 wire pre_need_rnd1;
+wire pre_pre_need_rnd2;
 wire pre_need_rnd2;
 wire in_process_status;
 wire dut_data_in_valid;
@@ -120,18 +128,22 @@ clyde_core(
     .pre_enable(pre_enable_core),
     .rnd1_SB(rnd1),
     .rnd2_SB(rnd2),
+    .pre_pre_need_rnd1_SB(pre_pre_need_rnd1),
     .pre_need_rnd1_SB(pre_need_rnd1),
+    .pre_pre_need_rnd2_SB(pre_pre_need_rnd2),
     .pre_need_rnd2_SB(pre_need_rnd2),
     .in_process_status(in_process_status)
 );
 
 /////// Stalling mechanism ////////
-stalling_unit #(.RND_RATE_DIVIDER(RND_RATE_DIVIDER))
+stalling_unit #(.RND_RATE_DIVIDER(RND_RATE_DIVIDER)) 
 stall_mec(
     .clk(clk),
     .pre_syn_rst(pre_syn_rst),
     .pre_enable_glob(pre_enable),
+    .pre_pre_need_rnd1(pre_pre_need_rnd1),
     .pre_need_rnd1(pre_need_rnd1),
+    .pre_pre_need_rnd2(pre_pre_need_rnd2),
     .pre_need_rnd2(pre_need_rnd2),
     .rnd_valid_next_enable1(rnd_valid_next_enable1),
     .rnd_valid_next_enable2(rnd_valid_next_enable2),

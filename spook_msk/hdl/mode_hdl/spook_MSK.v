@@ -104,6 +104,8 @@ wire from_dp_clyde_pre_data_out_valid;
 wire to_dp_clyde_pre_enable;
 wire to_dp_clyde_en_feeding_prng1;
 wire to_dp_clyde_en_feeding_prng2;
+wire to_dp_clyde_lock_feed1;
+wire to_dp_clyde_lock_feed2;
 wire from_dp_clyde_ready_start;
 
 // Controller <-> Encoder
@@ -221,6 +223,8 @@ cntrl_core (
     .to_dp_clyde_pre_enable(to_dp_clyde_pre_enable),
     .to_dp_clyde_en_feeding_prng1(to_dp_clyde_en_feeding_prng1),
     .to_dp_clyde_en_feeding_prng2(to_dp_clyde_en_feeding_prng2),
+    .to_dp_clyde_lock_feed1(to_dp_clyde_lock_feed1),
+    .to_dp_clyde_lock_feed2(to_dp_clyde_lock_feed2),
     .from_dp_clyde_ready_start(from_dp_clyde_ready_start),
 
     // Controller <-> Encoder
@@ -293,6 +297,8 @@ datapath_core (
     .clyde_pre_enable(to_dp_clyde_pre_enable),
     .clyde_en_feeding_prng1(to_dp_clyde_en_feeding_prng1),
     .clyde_en_feeding_prng2(to_dp_clyde_en_feeding_prng2),
+    .clyde_lock_feed1(to_dp_clyde_lock_feed1),
+    .clyde_lock_feed2(to_dp_clyde_lock_feed2),
     .clyde_ready_start(from_dp_clyde_ready_start),
     // Encoder //////////////
     .to_enc_bundle_blck_out(to_enc_bundle_blck_out),

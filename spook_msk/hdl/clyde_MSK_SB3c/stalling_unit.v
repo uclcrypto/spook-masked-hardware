@@ -3,14 +3,17 @@
     randomness generation. 
 */
 module stalling_unit
-#(
-    parameter RND_RATE_DIVIDER = 2
+#
+(
+    parameter RND_RATE_DIVIDER = 1 
 )
 (
     input clk,
     input pre_syn_rst,
     input pre_enable_glob,
+    input pre_pre_need_rnd1,
     input pre_need_rnd1,
+    input pre_pre_need_rnd2,
     input pre_need_rnd2,
     input rnd_valid_next_enable1,
     input rnd_valid_next_enable2,
@@ -32,72 +35,83 @@ reg syn_rst;
 always@(posedge clk)
     syn_rst <= pre_syn_rst;
 
+// prng ready to start
+wire init_config = ~core_in_process;
+wire prng1_rdy = rnd_valid_next_enable1;
+wire prng2_rdy = rnd_valid_next_enable2;
+wire prngs_rdy = prng1_rdy & prng2_rdy;
+
 // The core is ready to start a new run
-assign ready_start_run = ~core_in_process;
-// A new run starts
-wire start_run_acknowledgement = ready_start_run & pre_data_in_valid;
+wire valid_start_run;
+assign ready_start_run = prngs_rdy & init_config & ~valid_start_run;
 
-wire start_run_acknowledged;
+// Valid start run 
+wire valid_pre_start_run = pre_data_in_valid & ready_start_run;
 dff #(.SIZE(1),.ASYN(0))
-prev_start_acknoledged_reg(
+dff_started(
     .clk(clk),
     .rst(syn_rst),
-    .d(start_run_acknowledgement),
+    .d(valid_pre_start_run),
     .en(enable_stalling_reg),
-    .q(start_run_acknowledged)
+    .q(valid_start_run)
 );
 
-/////// Status of randomness 1 ///////
-// Stalling register prng1 //
-wire next_stall_from_prng1;
-wire stall_from_prng1;
+
+// Stall registers
+wire stall_from_prng1, stall_from_prng2;
+wire next_flag_stall1, next_flag_stall2;
+wire flag_stall1, flag_stall2;
+wire rst_f1, rst_f2;
+
 dff #(.SIZE(1),.ASYN(0))
-stall_reg1(
+dff_stall1(
     .clk(clk),
-    .rst(syn_rst),
-    .d(next_stall_from_prng1),
+    .rst(rst_f1),
+    .d(next_flag_stall1),
     .en(enable_stalling_reg),
-    .q(stall_from_prng1)
+    .q(flag_stall1)
 );
 
-// Stalling register prng2 //
-wire next_stall_from_prng2;
-wire stall_from_prng2;
 dff #(.SIZE(1),.ASYN(0))
-stall_reg2(
+dff_stall2(
     .clk(clk),
-    .rst(syn_rst),
-    .d(next_stall_from_prng2),
+    .rst(rst_f2),
+    .d(next_flag_stall2),
     .en(enable_stalling_reg),
-    .q(stall_from_prng2)
+    .q(flag_stall2)
 );
 
-wire init_pre_need_rnd = pre_need_rnd1 & start_run_acknowledged;
-wire init_stall_req = init_pre_need_rnd & ~rnd_valid_next_enable1;
+assign stall_from_prng1 = pre_need_rnd1 & ~rnd_valid_next_enable1;
+assign stall_from_prng2 = pre_need_rnd2 & ~rnd_valid_next_enable2;
 
-wire in_proc_pre_need_rnd1 = core_in_process & (pre_need_rnd1 | stall_from_prng1);
-wire in_proc_stall_req1 = in_proc_pre_need_rnd1 & ~rnd_valid_next_enable1;
+assign next_flag_stall1 = stall_from_prng1 | flag_stall1;
+assign next_flag_stall2 = stall_from_prng2 | flag_stall2;
 
-wire in_proc_pre_need_rnd2 = core_in_process & (pre_need_rnd2 | stall_from_prng2);
-wire in_proc_stall_req2 = in_proc_pre_need_rnd2 & ~rnd_valid_next_enable2;
+assign rst_f1 = syn_rst | flag_stall1 & rnd_valid_next_enable1;
+assign rst_f2 = syn_rst | flag_stall2 & rnd_valid_next_enable2;
 
-assign next_stall_from_prng1 = init_stall_req | in_proc_stall_req1;
-assign next_stall_from_prng2 = in_proc_stall_req2;
+// Core enable and glob ready signals //
+wire stalled_core = flag_stall1 | flag_stall2;
+
+wire stall_req = stall_from_prng1 | stall_from_prng2;
+wire pre_need_rnd = pre_need_rnd1 | pre_need_rnd2;
+wire pre_pre_need_rnd = pre_pre_need_rnd1 | pre_pre_need_rnd2;
 
 // The pre enable signal of the PRNG
-assign pre_enable_run_prng1 = init_pre_need_rnd | in_proc_pre_need_rnd1;
-assign pre_enable_run_prng2 = in_proc_pre_need_rnd2;
+generate
+if (RND_RATE_DIVIDER==1) begin
+    assign pre_enable_run_prng1 = init_config ? (prng1_rdy ? valid_pre_start_run | (valid_start_run & rnd_valid_next_enable1) : (valid_start_run ? pre_pre_need_rnd1 : 1'b1)) : (stall_from_prng1 | flag_stall1) & ~rnd_valid_next_enable1 | pre_pre_need_rnd1;
 
-// Core enable and glob ready signals ///
-wire init_mask_pre_enable_core = start_run_acknowledgement | (start_run_acknowledged & ~init_stall_req);
-wire in_proc_mask_pre_en_prng1 = (rnd_valid_next_enable1 | ~(pre_need_rnd1 | stall_from_prng1));
-wire in_proc_mask_pre_en_prng2 = (rnd_valid_next_enable2 | ~(pre_need_rnd2 | stall_from_prng2));
-wire in_proc_mask_pre_enable_core = core_in_process & in_proc_mask_pre_en_prng1 & in_proc_mask_pre_en_prng2;
+    assign pre_enable_run_prng2 = init_config ? (prng2_rdy ? valid_pre_start_run | (valid_start_run & rnd_valid_next_enable2) : (valid_start_run ? pre_pre_need_rnd2 : 1'b1)) : (stall_from_prng2 | flag_stall2) & ~rnd_valid_next_enable2 | pre_pre_need_rnd2;
+end else begin
+    assign pre_enable_run_prng1 = init_config ? (prng1_rdy ? valid_pre_start_run | (valid_start_run & rnd_valid_next_enable1) : (valid_start_run ? pre_pre_need_rnd1 : 1'b1)) : (stall_from_prng1 | flag_stall1) & ~rnd_valid_next_enable1 | pre_pre_need_rnd1 | pre_need_rnd1;
 
-wire mask_pre_enable_core = init_mask_pre_enable_core | in_proc_mask_pre_enable_core;
-assign pre_enable_core = pre_enable_glob & mask_pre_enable_core;  
+    assign pre_enable_run_prng2 = init_config ? (prng2_rdy ? valid_pre_start_run | (valid_start_run & rnd_valid_next_enable2) : (valid_start_run ? pre_pre_need_rnd2 : 1'b1)) : (stall_from_prng2 | flag_stall2) & ~rnd_valid_next_enable2 | pre_pre_need_rnd1 | pre_pre_need_rnd2 | pre_need_rnd2;
+end
+endgenerate
 
-assign data_in_valid = start_run_acknowledged;
+assign pre_enable_core = pre_enable_glob & (init_config ? (valid_pre_start_run) | (valid_start_run & (pre_need_rnd ? ~stall_req : 1'b1)) : (stalled_core ? (flag_stall1 & rst_f1) | (flag_stall2 & rst_f2)  : ((pre_pre_need_rnd | pre_need_rnd) ? ~stall_req : 1'b1))); 
+assign data_in_valid = valid_start_run;
 
 
 endmodule

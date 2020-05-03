@@ -11,6 +11,7 @@ module prng_unit
 )
 (
     input pre_enable_run,
+    input lock_feed,
     input pre_rst,
     input clk,
     input feed,
@@ -18,18 +19,19 @@ module prng_unit
     input [SIZE_FEED-1:0] feed_data,
     // The rnd is valid 1 cycle the next time the core is enabled.
     output rnd_valid_next_enable,
+    output pre_rnd_valid_next_enable,
     output [SIZE_RND-1:0] rnd_out
 );
 
 // Global enable signal //
 reg glob_enable;
 always@(posedge clk)
-    glob_enable <= pre_rst | feed | pre_enable_run;
+    glob_enable <= pre_rst | feed | (~lock_feed & pre_enable_run);
 
 // Feeding flag //
 reg ctrl_feed;
 always@(posedge clk)
-    ctrl_feed <= feed;
+    ctrl_feed <= feed | lock_feed;
 
 reg [SIZE_FEED-1:0] feed_data_barrier;
 always@(posedge clk)
@@ -86,52 +88,94 @@ endgenerate
 
 // Randomness handling
 localparam RND_LAT = SIZE_RND / SIZE_GEN;
-parameter CNT_SIZE = ((RND_LAT % 2) == 0) ? $clog2(RND_LAT) : $clog2(RND_LAT) + 1;
-localparam BUF_SIZE = SIZE_RND-SIZE_GEN;
+parameter CNT_SIZE = $clog2(RND_LAT) + 1;
+
+// Buffer reg (used to avoid glitches)
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
+wire [SIZE_RND-1:0] next_rnd_buffer;
+dff #(.SIZE(SIZE_RND),.ASYN(0))
+rnd_buffer_reg(
+    .clk(clk),
+    .rst(1'b0),
+    .d(next_rnd_buffer),
+    .en(glob_enable),
+    .q(rnd_out)
+);
 
 generate
 if(RND_LAT == 1) begin
-    assign rnd_valid_next_enable = ~rst;
-    assign rnd_out = Q;
-
-end else begin
-    // Randomness generated in multiple cycles
-    wire [BUF_SIZE-1:0] rnd_buffer;
-    wire [BUF_SIZE-1:0] next_rnd_buffer;
-    wire rst_rnd_cnt;
-    dff #(.SIZE(BUF_SIZE),.ASYN(0))
-    rnd_buffer_reg(
+    // rnd_validity
+    wire rnd_validity;
+    wire next_rnd_validity = glob_enable & ~lock_feed;
+    wire rst_rnd_validity = feed | lock_feed;
+    dff #(.SIZE(1),.ASYN(0))
+    dff_rnd_valid(
         .clk(clk),
-        .rst(1'b0),
-        .d(next_rnd_buffer),
+        .rst(rst_rnd_validity),
+        .d(next_rnd_validity),
         .en(glob_enable),
-        .q(rnd_buffer)
+        .q(rnd_validity)
     );
 
-    if(BUF_SIZE==SIZE_GEN) begin
-        assign next_rnd_buffer = Q;
-    end else begin
-        assign next_rnd_buffer = {Q,rnd_buffer[SIZE_GEN +: BUF_SIZE-SIZE_GEN]};
-    end
+    assign rnd_valid_next_enable = rnd_validity;
+    assign pre_rnd_valid_next_enable = next_rnd_validity | rnd_validity;
+
+    assign next_rnd_buffer = Q;
+
+    
+
+end else begin
+
+    // Todo add pre_rnd_valid_next_enable.
+
+    // Randomness generated in multiple cycles
+    wire rst_rnd_cnt;
+    wire init_generation_done;
+    wire pre_pre_buffer_full;
+    wire pre_buffer_full;
+    wire buffer_full;
 
     wire [CNT_SIZE-1:0] rnd_cnt;
     wire [CNT_SIZE-1:0] next_rnd_cnt = rnd_cnt + 1'b1;
 
-    wire pre_process_rnd = rnd_valid_next_enable & pre_enable_run;
-    wire buffer_full = rnd_cnt == (RND_LAT-1);
-    assign rst_rnd_cnt = (buffer_full & pre_process_rnd) | rst | ctrl_feed;
+    if(RND_LAT==2) begin
+        assign pre_pre_buffer_full = init_generation_done ? rst_rnd_cnt : (rnd_cnt == 0);
+    end else begin
+        assign pre_pre_buffer_full = (init_generation_done ? (rnd_cnt == RND_LAT-3) : (rnd_cnt == RND_LAT-2)) & ~rst_rnd_cnt;
+    end
+
+    assign pre_buffer_full = (init_generation_done ? (rnd_cnt == RND_LAT-2) : (rnd_cnt == RND_LAT-1)) & ~rst_rnd_cnt;
+    assign buffer_full = init_generation_done ? (rnd_cnt == (RND_LAT-1)) : (rnd_cnt == RND_LAT);
+    assign rst_rnd_cnt =  (buffer_full & glob_enable) | rst | ctrl_feed;
 
     dff #(.SIZE(CNT_SIZE),.ASYN(0))   
     rnd_cnt_reg(
         .clk(clk),
         .rst(rst_rnd_cnt),
         .d(next_rnd_cnt),
-        .en(glob_enable),
+        .en(glob_enable & ~buffer_full),
         .q(rnd_cnt)
     );
-  
-    assign rnd_valid_next_enable = (((rnd_cnt == (RND_LAT-2)) & glob_enable & ~ctrl_feed) | (buffer_full & ~glob_enable)) & ~rst;
-    assign rnd_out = {Q,rnd_buffer};
+ 
+    wire rst_init_flag = rst | ctrl_feed;
+    dff #(.SIZE(1),.ASYN(0))
+    dff_init_gen(
+        .clk(clk),
+        .rst(rst_init_flag),
+        .d(buffer_full | init_generation_done),
+        .en(glob_enable),
+        .q(init_generation_done)
+    );
+
+    assign rnd_valid_next_enable = (( pre_buffer_full & glob_enable & ~ctrl_feed & ~rst_rnd_cnt) | (buffer_full & ~glob_enable)) & ~rst;
+    
+    if(RND_LAT==2) begin
+        assign pre_rnd_valid_next_enable = ((pre_pre_buffer_full & glob_enable & ~ctrl_feed) | (pre_buffer_full & ~glob_enable)) & ~rst;
+    end else begin
+        assign pre_rnd_valid_next_enable = ((pre_pre_buffer_full & glob_enable & ~ctrl_feed & ~rst_rnd_cnt) | (pre_buffer_full & ~glob_enable)) & ~rst;
+    end
+
+    assign next_rnd_buffer = {Q,rnd_out[SIZE_GEN +: SIZE_RND-SIZE_GEN]};
 
 end
 endgenerate

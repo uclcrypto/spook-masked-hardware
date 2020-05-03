@@ -45,7 +45,9 @@ module MSKclyde_128_1R #(
     pre_enable,
     rnd1_SB,
     rnd2_SB,
+    pre_pre_need_rnd1_SB,
     pre_need_rnd1_SB,
+    pre_pre_need_rnd2_SB,
     pre_need_rnd2_SB,
     in_process_status
 );
@@ -116,7 +118,11 @@ input [SIZE_SB_RND-1:0] rnd1_SB /*verilator public*/;
 (* fv_type="random", fv_count=0 *) 
 input [SIZE_SB_RND-1:0] rnd2_SB;
 (* fv_type="control" *) 
+output pre_pre_need_rnd1_SB;
+(* fv_type="control" *) 
 output pre_need_rnd1_SB;
+(* fv_type="control" *) 
+output pre_pre_need_rnd2_SB;
 (* fv_type="control" *) 
 output pre_need_rnd2_SB;
 (* fv_type="control" *)
@@ -130,7 +136,6 @@ output in_process_status;
 reg syn_rst;
 always@(posedge clk)
     syn_rst <= pre_syn_rst;
-
 
 ////// GENERAL DATAPATH //////
 // phi unit //////////
@@ -169,6 +174,7 @@ sh_b2c_sb(
 
 // zero sharing //
 localparam SIZE_CHUNK_COLS = Nbits/SB_DIVIDER;
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [SIZE_SB_CHUNK-1:0] sharing_cols_chunk_zero;
 cst_mask #(.d(d),.count(SIZE_CHUNK_COLS))
 cst_cols_SB_0(
@@ -177,6 +183,7 @@ cst_cols_SB_0(
 );
 
 // Feeding SB mux //
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [SIZE_SB_CHUNK-1:0] sharing_cols_chunk_to_SB;
 wire ctrl_enable_feed_SB;
 MSKmux_par #(.d(d),.count(SIZE_CHUNK_COLS))
@@ -226,6 +233,7 @@ wire [SIZE_SHARING-1:0] sharing_bundle_to_LB;
 
 // zero sharing //
 localparam SIZE_CHUNK_BUNDLE = Nbits/LB_DIVIDER;
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [SIZE_LB_CHUNK-1:0] sharing_bundle_chunk_zero;
 cst_mask #(.d(d),.count(SIZE_CHUNK_BUNDLE))
 cst_bundle_LB_0(
@@ -234,6 +242,7 @@ cst_bundle_LB_0(
 );
 
 // Feeding LB mux //
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [SIZE_LB_CHUNK-1:0] sharing_bundle_chunk_to_LB;
 wire ctrl_enable_feed_LB;
 MSKmux_par #(.d(d),.count(SIZE_CHUNK_BUNDLE))
@@ -322,6 +331,7 @@ state_reg(
 );
 
 // Output mux ////////////////////////////
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [SIZE_SHARING-1:0] cst_sharing_zero; 
 cst_mask #(.d(d),.count(Nbits))
 cst_zero_out(
@@ -420,10 +430,12 @@ wire pre_rst_run = ~flag_in_process & ~next_flag_in_process;
 wire end_r_computation = (mask_cnt == R_LAT-1);
 // The round counter should be increased at the next clock cycle
 wire pre_end_r_computation = (mask_cnt == R_LAT-2); 
+// Last round 
+wire last_round = (r_cnt == R_AMOUNT-1);
 // Last clock cycle of the run
-wire end_process = end_r_computation & (r_cnt == R_AMOUNT-1);
+wire end_process = end_r_computation & last_round; //(r_cnt == R_AMOUNT-1);
 // The next clock cycle is the last one of the run
-wire pre_end_process = pre_end_r_computation & (r_cnt == R_AMOUNT-1);
+wire pre_end_process = pre_end_r_computation & last_round; //(r_cnt == R_AMOUNT-1);
 
 ///// Control for the masking counter /////
 wire pre_en_mask_cnt = pre_syn_rst | pre_enable;
@@ -491,13 +503,31 @@ wire pre_need_rnd2_SB_DEC;
 
 wire pre_need_rnd2_SB = inverse ? pre_need_rnd2_SB_DEC : pre_need_rnd2_SB_ENC;
 
+// DEBUG //
+wire pre_pre_need_rnd1_SB_ENC;
+wire pre_pre_need_rnd2_SB_ENC;
+wire pre_pre_need_rnd1_SB_DEC;
+wire pre_pre_need_rnd2_SB_DEC;
+assign pre_pre_need_rnd1_SB = inverse ? pre_pre_need_rnd1_SB_DEC : pre_pre_need_rnd1_SB_ENC;
+assign pre_pre_need_rnd2_SB = inverse ? pre_pre_need_rnd2_SB_DEC : pre_pre_need_rnd2_SB_ENC;
+
+
 generate
 if(SB_DIVIDER==1) begin
     assign pre_need_rnd1_SB_ENC = flag_in_process ? (end_r_computation & ~end_process) : 1'b1;
     assign pre_need_rnd2_SB_ENC = flag_in_process ? (mask_cnt==0) & en_mask_cnt: 1'b0;
+
+    //
+    assign pre_pre_need_rnd1_SB_ENC = flag_in_process ? (pre_end_r_computation &  ~last_round) : 1'b1; 
+    assign pre_pre_need_rnd2_SB_ENC = flag_in_process ? (end_r_computation &  ~last_round) : 1'b1; 
+
 end else begin
-    assign pre_need_rnd1_SB_ENC = flag_in_process ? (end_r_computation & ~end_process) | (mask_cnt < SB_DIVIDER-1) : 1'b1;
-    assign pre_need_rnd2_SB_ENC = flag_in_process ? (mask_cnt < SB_DIVIDER) & en_mask_cnt: 1'b0;
+    assign pre_need_rnd1_SB_ENC = flag_in_process ? ((end_r_computation & ~end_process) | (mask_cnt < SB_DIVIDER-1)) : 1'b1;
+    assign pre_need_rnd2_SB_ENC = flag_in_process ? (mask_cnt < SB_DIVIDER) : 1'b0;
+
+    //
+    assign pre_pre_need_rnd1_SB_ENC = flag_in_process ? ((pre_end_r_computation | end_r_computation) & ~last_round) | (mask_cnt < SB_DIVIDER-2) : 1'b1;
+    assign pre_pre_need_rnd2_SB_ENC = flag_in_process ? (mask_cnt < SB_DIVIDER-1) | (end_r_computation & ~last_round) : 1'b1; 
 end
 endgenerate
 
@@ -535,9 +565,15 @@ if(ALLOW_SPEED_ARCH) begin
     if(LB_DIVIDER==1) begin
         assign pre_need_rnd1_SB_DEC = pre_need_rnd1_SB_ENC; 
         assign pre_need_rnd2_SB_DEC = pre_need_rnd2_SB_ENC; 
+        //
+        assign pre_pre_need_rnd1_SB_DEC = flag_in_process ? (mask_cnt < SB_DIVIDER-2) | ((pre_end_r_computation | end_r_computation) & ~last_round): 1'b1;
+        assign pre_pre_need_rnd2_SB_DEC = flag_in_process ? (mask_cnt<SB_DIVIDER-1) | (end_r_computation & ~last_round): 1'b1;
     end else begin
         assign pre_need_rnd1_SB_DEC = flag_in_process & (mask_cnt<SB_DIVIDER); 
-        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER) & (mask_cnt>0) & en_mask_cnt; 
+        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER) & (mask_cnt>0) ; 
+        // 
+        assign pre_pre_need_rnd1_SB_DEC = flag_in_process ? (mask_cnt<SB_DIVIDER-1) | (end_r_computation & ~last_round): 1'b1;
+        assign pre_pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt<SB_DIVIDER); 
     end
 
 end else begin
@@ -552,10 +588,16 @@ end else begin
 
     if(LB_DIVIDER==1) begin
         assign pre_need_rnd1_SB_DEC = flag_in_process & (mask_cnt<SB_DIVIDER); 
-        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER) & (mask_cnt>0) & en_mask_cnt; 
+        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER) & (mask_cnt>0); 
+        //
+        assign pre_pre_need_rnd1_SB_DEC = flag_in_process ? (mask_cnt < SB_DIVIDER-1) | (end_r_computation & ~last_round): 1'b1;
+        assign pre_pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt < SB_DIVIDER) ;
     end else begin
         assign pre_need_rnd1_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER); 
-        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-2<SB_DIVIDER) & (mask_cnt>1) & en_mask_cnt; 
+        assign pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-2<SB_DIVIDER) & (mask_cnt>1) ; 
+        //
+        assign pre_pre_need_rnd1_SB_DEC = flag_in_process & (mask_cnt<SB_DIVIDER);
+        assign pre_pre_need_rnd2_SB_DEC = flag_in_process & (mask_cnt-1<SB_DIVIDER) & (mask_cnt>0); 
     end
 
 end

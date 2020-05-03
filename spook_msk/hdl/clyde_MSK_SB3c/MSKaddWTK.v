@@ -28,6 +28,7 @@ wire [Nbits-1:0] ch_delta = ctrl_TK_addition ? delta : {Nbits{1'b0}};
 wire [3:0] ch_W = ctrl_W_addition ? W : 4'b0;
 
 // Key selection
+(* KEEP = "TRUE", S = "TRUE", DONT_TOUCH = "TRUE" *)
 wire [d*Nbits-1:0] sharing_zero;
 cst_mask #(.d(d),.count(Nbits))
 cst_zero(

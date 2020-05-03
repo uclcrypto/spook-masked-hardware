@@ -56,6 +56,8 @@ module spook_cntrl
     output to_dp_clyde_pre_enable,
     output to_dp_clyde_en_feeding_prng1,
     output to_dp_clyde_en_feeding_prng2,
+    output to_dp_clyde_lock_feed1,
+    output to_dp_clyde_lock_feed2,
     input from_dp_clyde_ready_start, 
 
     // Blck buider controller ////////////////
@@ -557,8 +559,10 @@ assign to_dp_clyde_pre_enable = ((nextstate == START_CMP_B) |
 (state == PREPARE_TAG_CMP) |
 (state == WAIT_TAG_CMP)) & ~from_dp_clyde_pre_data_out_valid;
 
-assign to_dp_clyde_en_feeding_prng1 = (dec_sel_nibble == 4'd1) & (state == LOAD_SEED) & data_in_valid;
-assign to_dp_clyde_en_feeding_prng2 = (dec_sel_nibble == 4'd2) & (state == LOAD_SEED) & data_in_valid;
+assign to_dp_clyde_lock_feed1 = (dec_sel_nibble == 4'd1) & (state == LOAD_SEED);
+assign to_dp_clyde_lock_feed2 = (dec_sel_nibble == 4'd2) & (state == LOAD_SEED);
+assign to_dp_clyde_en_feeding_prng1 = to_dp_clyde_lock_feed1 & data_in_valid;
+assign to_dp_clyde_en_feeding_prng2 = to_dp_clyde_lock_feed2 & data_in_valid;
 
 // Block builder control signals //////////
 

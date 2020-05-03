@@ -52,6 +52,8 @@ module datapath
     clyde_pre_enable,
     clyde_en_feeding_prng1,
     clyde_en_feeding_prng2,
+    clyde_lock_feed1,
+    clyde_lock_feed2,
     clyde_ready_start,
     // Encoder //////////////
     to_enc_bundle_blck_out,
@@ -108,6 +110,8 @@ output clyde_pre_data_out_valid;
 input clyde_pre_enable;
 input clyde_en_feeding_prng1;
 input clyde_en_feeding_prng2;
+input clyde_lock_feed1;
+input clyde_lock_feed2;
 output clyde_ready_start;
 // Encoder //////////////
 output [n-1:0] to_enc_bundle_blck_out;
@@ -194,8 +198,10 @@ clyde_core(
     .data_out(clyde_data_out),
     .pre_data_out_valid(clyde_pre_data_out_valid),
     .pre_enable(clyde_pre_enable),
+    .lock_feed1(clyde_lock_feed1),
     .feed1(clyde_en_feeding_prng1),
     .feed_data(from_decod_data_in),
+    .lock_feed2(clyde_lock_feed2),
     .feed2(clyde_en_feeding_prng2),
     .ready_start_run(clyde_ready_start)
 );
