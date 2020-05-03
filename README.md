@@ -1,18 +1,17 @@
 # **Spook Hardware Implementations**
 
-This repository contains all the file relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
-the Hardware Capture the Flag. A practical implementation was done on 
-a [sakura_g board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) to generate the traces 
-datasets (currently avaiable on the [Spook website](https://www.spook.dev/).
+This repository contains all the files relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
+the Hardware-oriented version of Capture the Flag. A practical implementation was done on 
+a [Sakura-G board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) which was used to generate the
+datasets (currently available on the [Spook website](https://www.spook.dev/)).
 
-The HW core follows an custom API broadly based
-on the [LWC HW API](https://cryptography.gmu.edu/athena/LWC/LWC_HW_API.pdf) proposed in the context of the 
-LWC NIST competition. We provide a python library that generates from an high level the data that 
+The hardware core follows a custom API broadly based
+on the [LWC HW API](https://cryptography.gmu.edu/athena/LWC/LWC_HW_API.pdf), proposed in the context of the 
+LWC NIST competition. We provide a python library that generates from a high level the data that 
 should be sent to the core in order to perform different operations (e.g., load the key, encryption, ...).
-The latter is used to generate the simulations testvectors as well as the practical data use to take the measurements. 
+The latter is used to generate the test vectors used in simulatations as well as the actual FPGA implementation. 
 
-_Note: no security claims comes with this code. It is a straight foward implementation of state-of-the 
-art software masking scheme which security depends on various factors such masking order, independence 
+_Note: no security claims comes with this code. It is a straightfoward implementation of state-of-the-art software masking scheme which security depends on various factors such masking order, independence 
 assumption and noise level._
 
 ## Organisation
@@ -23,7 +22,7 @@ The repository contains the following directories:
     - [hdl](spook_msk/hdl): HDL files of the implementation.
     - [schematics](spook_msk/schematics): useful schematics of the architecure.
     - [simu](spook_msk/simu): script and workspace for the simulations.
-    - [tb](spook_msk/tb): directory conatining the HW testbenches. 
+    - [tb](spook_msk/tb): directory containing HW testbenches. 
 + [spook_hw_api](spook_hw_api): scripts to format data according to the HW API (see below)
 
 ## Software dependencies
@@ -44,8 +43,8 @@ and linux shell. The following [PyPi](https://pypi.or) packages are required:
 ### Data Formatting
 
 To perform an operation (e.g., encryption or decryption), data are sent to and received from the core according to 
-a specific communication protocol based on sequences of 32bits words (denoted next commands). A command
-is considered as a vector of 32 bits, for which each bits is denoted b<sub>i</sub> (b<sub>0</sub> being the
+a specific communication protocol based on sequences of 32-bit words (denoted next commands). A command
+is considered as a 32-bit vector, for which each bits is denoted b<sub>i</sub> (b<sub>0</sub> being the
 less significant bit), as shown here:  
 
 <div align="center">
@@ -79,10 +78,10 @@ where the `opcode` takes the following values:
 + `4'b0100` *(LDKEY)*: to load a fresh key.
 + `4'b1010` *(LD_SEED)*: to load a fresh seed into a PRNG.
 
-Each instruction ending is acknowledged using a status command. On the one hand, an instruction
-proceeding as expected results in with a success status. On the other hand, 
+Each instruction ending is acknowledged using a status command from the core. On one hand, an instruction
+proceeding as expected results in a success status. On the other hand, 
 when an error occurs (e.g, the core is receiving data that he was not expecting), the
-instruction under process results unexpectedly with a failure status. Status command
+instruction under process results in a failure status. Status command
 are structured similarly to instruction, except that the `opcode` is only taking the 
 following values:
 
@@ -94,9 +93,9 @@ is not valid.
 
 **Header**
 
-A sending of data is structured as a dedicated sequence of commands (denoted a segment). A segment
-begins with a specific command (i.e., the header) containing all the information making a proper
-data transfer possible. The 4 MSBs of each header (denoted `dtype`) indicates the type of data 
+A dedicated sequence of commands (denoted as segments) are used to send data. A segment
+begins with a specific command (i.e., the header) containing all the information ensuring a proper
+data transfer. The 4 MSBs of each header (denoted `dtype`) indicates the type of data 
 contained in the current segment. These can take the following values:
 
 + `4'b1100` *(KEY)*: the secret key.
@@ -127,16 +126,16 @@ Putting all together, the following header structure is considered:
 
 **Raw data**
 
-This is the basic command type, representing the raw data sent to the core. In that case, the 32bits 
-are useful bits of the data, the latter being encoded as a sequence of 32bits words.
+This is the basic command type, representing the raw data sent to the core. In this case, the 32 bits in the vector
+represent data bits.<!--, the latter being encoded as a sequence of 32-bit words.-->
 
 ### Commands Flows
 
-The raw data are sent in segments. A segment is the concatenation of a header and some raw data commands.
+Raw data are sent in segments. A segment is the concatenation of a header and some raw data commands.
 A segment is said to be filled when the amount of data bytes he contains is a multiple of 4. In other
 case, the segment is said to be unfilled. Data related to a same `dtype` can be splitted in multiple 
 segments as long as these are sent sequentially and that the only unfilled segment is the last one.
-The next examples show valid commands streams for the same associated data vector. 
+Next examples show valid commands streams for the same associated data vector. 
 The notation B<sub>*i*</sub> refers to the byte of index *i*, B<sub>0</sub> being the less significant byte:
 
 
@@ -163,7 +162,7 @@ Associated Data (big endian ordering, 11 bytes long):
 </div>
 
 A typical instruction command flow is composed of one instruction followed by one or muliple data segments.
-The data are expected to be sent in a specific order depending on the instruction processed. The next Table
+Data are expected to be sent in a specific order depending on the instruction processed. The next Table
 show the expected command flow for each instruction. The notation DS<sub>`dtype`</sub> denotes here the data segment 
 related to the data type `dtype` and the notation INST<sub>`opcode`</sub> denote the instruction related to `opcode`:
 
@@ -172,10 +171,10 @@ related to the data type `dtype` and the notation INST<sub>`opcode`</sub> denote
 |**Encryption**|**Decryption**|**Load new key**|**Load new seed**|
 |:-------:|:-------:|:---------:|:-----------:|
 |INST<sub>ENC</sub>|INST<sub>DEC</sub>|INST<sub>LDKEY</sub>|INST<sub>LD_SEED</sub>|
-|SD<sub>Npub</sub>|SD<sub>Npub</sub>|SD<sub>KEY</sub>|SD<sub>SEED</sub>|
-|SD<sub>AD</sub>|SD<sub>AD</sub>| | |
-|SD<sub>PT</sub>|SD<sub>CT</sub>| | |
-| |SD<sub>TAG</sub>| | |
+|DS<sub>Npub</sub>|DS<sub>Npub</sub>|DS<sub>KEY</sub>|DS<sub>SEED</sub>|
+|DS<sub>AD</sub>|DS<sub>AD</sub>| | |
+|DS<sub>PT</sub>|DS<sub>CT</sub>| | |
+| |DS<sub>TAG</sub>| | |
 | | | | |
 
 </div>
@@ -187,15 +186,15 @@ The expected outputted commands flows for each instruction are shown in the next
 
 |**Encryption**|**Valid decryption**|**Load new key**|**Load new seed**|
 |:-------:|:-------:|:---------:|:-----------:|
-|SD<sub>CT</sub>|SD<sub>PT</sub>|INST<sub>SUCCESS</sub>|INST<sub>SUCCESS</sub>|
-|SD<sub>TAG</sub>|INST<sub>SUCCESS</sub>| | |
+|DS<sub>CT</sub>|DS<sub>PT</sub>|INST<sub>SUCCESS</sub>|INST<sub>SUCCESS</sub>|
+|DS<sub>TAG</sub>|INST<sub>SUCCESS</sub>| | |
 |INST<sub>SUCCESS</sub>| | | |
 
 </div>
 
 ## Spook Global Hardware Framework
  
- In this section is presented the global framework considered during the design process of the Spook HW cores (for both flavours).
+In this section the global framework used for the design process of Spook HW cores (for both flavours) is presented.
  
  <div align="center">
  
@@ -204,43 +203,43 @@ The expected outputted commands flows for each instruction are shown in the next
 </div>
 
 The Spook HW core is interfaced with two AXI4-Stream interfaces (one at the input and one at the output). 
-The signals `c_in` and `c_out` are  respectively the commands entering to and outgoing from the core. 
-The signals `c_in_valid` and `c_out_valid` indicate that the corresponding commands are valid, while 
-the signals `ready_in` and `ready_out` indicate that the command recievers are ready to proceed their 
+Signals `c_in` and `c_out` are respectively command buses entering to and outgoing from the core. 
+Signals `c_in_valid` and `c_out_valid` indicate that the corresponding commands are valid, while 
+signals `ready_in` and `ready_out` indicate that the command receivers are ready to proceed their 
 respective commands. A valid data tranfer is performed and aknowledged when both the `*_valid` and the
 `ready_*` signals are high during a clock cycle. The core is composed by the following 4 main blocks:
 
-+ **Controller**: This module is the practical mind of the core. Based on a Final State Machine (FSM), it controls the 
-other blocks of the design in order to properly perform the Spook algorithm based on the API. The signals `*_ctrl` 
-represent controls signals going to a core while `*_status` signals represent some status flags coming back to the controller. 
-+ **Decoder**: This module is the practical input of the core. It receives the commands, decodes the latter and keep the 
++ **Controller**: This module is the practical mind of the core. Based on a Finete State Machine (FSM), it controls the 
+other blocks of the design in order to properly perform the Spook algorithm based on the API. The bus `*_ctrl` 
+represent controls signals going to a core while `*_status` bus represent some status flags coming back to the controller. 
++ **Decoder**: This module is the practical input of the core. It receives and decodes the commands, keeping the 
 information related to the current instruction and header under process (respectively `inst_info` and `header_info`). 
-It also compute the `data_validity` of each raw data command which is simply a validity flag for each byte of the command.
-+ **Encoder**: As opposed to the decoder, this module is the practical output of the core. 
-It receives the digested data, encode these according to the API and outputs these. 
+It also computes the `data_validity` of each raw data command which is simply a validity flag for each byte of the command.
 + **Datapath**: This module contains all the circuitry related to the computation required to perform a call of Spook. 
 More particularly, it is composed by raw data holders (e.g., for the long term key), routing 
 logic (i.e., muxes) and the logic for the primitives Shadow and Clyde.  
++ **Encoder**: As opposed to the decoder, this module is the practical output of the core. 
+It receives digested data from the datapath module. It also encodes digested data according to the API before forwarding them out. 
 
 ## Spook Protected Architecture
 
-Here is described the architecture of the datapath for the protected Spook HW core. The main difference with 
-the unprotected case is that the Clyde primitive is strongly protected against Side-Channel-Attacks(SCAs), using
-high-order masking. Additionally, the long term key is stored as a sharing instead of raw data. 
+The architecture of the datapath for the protected Spook HW core is here presented in detail. The main difference with 
+the unprotected case is that the Clyde primitive is designed implementing countermeasures against Side-Channel-Attacks (SCAs). This implementation makes use of masking with [Cassiers et al.](https://eprint.iacr.org/2020/185) scheme. 
+Additionally, the long term key is stored as a sharing instead of raw data. 
 Last but not least, the tag verification process is performed using the inverse operation of Clyde. 
 
 ### Quick Overview
 
-Since Shadow does not need to be masked, both primitives are implemented as independant modules. On top of these 
-some routing (i.e., muxes) redirect the data in an appropriate manner. As for the unprotected case, the 
-primitives process the data serially on reduced parts of the state in order to reduce the logical cost.
-More especially, modules for Shadow's Round A and Round B each compute over 128bits parts of the state and are processed 
-sequentially (i.e., 4 cycles for RA then 4 cycles for RB). Additionally, the Clyde core is implemented with independant
+Since Shadow does not need to be protected, both primitives are implemented as independent modules. On top of these, 
+some routing circuitry (i.e., muxes) redirects data in a proper manner. As for the unprotected case, the 
+primitives process data serially on reduced parts of the state in order to reduce the logical cost.
+Precisely, modules for Shadow's Round A and Round B, each computing over 128-bit parts of the state, are processed 
+sequentially (i.e., 4 cycles for RA then 4 cycles for RB). Additionally, the Clyde core is implemented with independent
 Sbox layer and Lbox layer (typically 8 Sboxes and 1 Lbox), both being also processed sequentially to perform a round function. 
 Finally, the inverse Sbox is implemented using the direct Sbox logic with two additional linear 
 layers. This allows to significantly reduce the implementation cost comparing to the naive design strategy.
 
-While the provided core implements the architecture described above, it offers the possibility 
+While the provided core implements the architecture described above, it offers the possibility to set 
 the amount of parallel Sboxes and Lboxes in the masked Clyde core. The amount of share is also editable. 
 This is done by modifying the following generation parameters in 
 the [datapath](/SpookMasked/hdl/mode_hdl/datapath.v) file:
@@ -255,10 +254,10 @@ Next, the amount of shares used for the masking scheme is denoted by `d`.
 As shown next, the Clyde module is separated in two mechanisms: the Clyde computation itself and the 
 generation/handling of the randomness. The computation takes as input the sharing of the key (i.e., the `sharing_key` bus), the 
 tweak (i.e., the `tweak` bus) and either the plaintext or the ciphertext (i.e., the `data_in` bus). The control signal `inverse` is used to 
-specify to the core wich operation (i.e., encryption or decryption) is currently perfomed. Next, controls signals will be represented in blue.  
-The randomness is generated by the use of two (similar) instances of a maximum length
+specify to the core which operation (i.e., encryption or decryption) is currently perfomed. Next, control signals will be represented in blue.  
+The randomness is generated by using two (similar) instances of a maximum length
 [128-bits LFSR](https://www.xilinx.com/support/documentation/application_notes/xapp210.pdf) (i.e., the `prng_unit` module). Seeds can be
-sent to these instances through the `feed_data` signal by the mean of a `SEED` segment, as explained above. 
+sent to these instances through the `feed_data` signal by means of a `SEED` segment, as explained above. 
 A specific controller (i.e., the `stalling_unit`) is used to properly handle the interaction between the PRNGs and the Clyde logic (using the 
 `control_sig*`, `control_status*`and `stall_control*` signals). Basically, the latter enables the LFSRs and stalls the computation 
 core when randomness is required and not ready. It is also used as a control wrapper interface for the Clyde computation logic.
@@ -269,11 +268,11 @@ core when randomness is required and not ready. It is also used as a control wra
 
 </div>
 
-Going deeper, the architecture of the practical Clyde's logic is decribed and shown next. Before everything, the non-sensitive data are
+Going deeper, the architecture of the practical Clyde's logic is described and shown next. First of all, non-sensitive data are
 formatted as a valid sharing (using an instance of the module `cst_mask`). This operation boils down to a proper formatting of the data. 
 Another way to see it is to compare it to a sharing operation of each bits of the data with a constant randomness of 0. A sharing data 
 representation is next represented in green. Although this operation is not visible for the tweak on the schematic, it is also 
-implicitly present in the `MSKaddWTK` module developped next. 
+implicitly present in the `MSKaddWTK` module developed next. 
 
 An execution of Clyde128 starts with a tweakey addition, as well as a 
 constant addition in the case of a decryption. These are performed by the `MSKaddWTK` module. The latter takes as input the key sharing,
@@ -295,9 +294,9 @@ up to some point.
 
 ### Lbox Layer
 
-The first layer presented is the lbox layer. The latter is in fact composed of parallel `MSKlbox_dual` module 
+The first layer presented is the Lbox layer. The latter is in fact composed of parallel `MSKlbox_dual` module 
 instances (inside the `MSKlbox_unit_dual` module). Each of these instances either computes the direct or 
-the inverse lbox operation depending on the `inverse` control signal. A full lbox layer is performed following 
+the inverse Lbox operation depending on the `inverse` control signal. A full Lbox layer is performed following 
 a shift register approach by looping over the `MSKlbox_unit_dual` module each time with a different part of the shared state. 
 
 <div align="center">
@@ -323,9 +322,9 @@ The different configuration are summed up in the following table:
 
 ### Sbox Layer 
 
-Similarly to the lbox layer, the sbox layer is composed of parallel `MSKspook_sbox_dual` module instances
+Similarly to the Lbox layer, the Sbox layer is composed of parallel `MSKspook_sbox_dual` module instances
 (inside of the `MSKsbox_unit_dual` module). Each of these instances can either computes the direct of the 
-inverse sbox operation depending on the `inverse` control signal. A full sbox layer is performed following
+inverse sbox operation depending on the `inverse` control signal. A full Sbox layer is performed following
 a shift register approach by looping over the `MSKsbox_unit_dual` module each time with a different part if the shared state. 
 In comparison with the lbox layer, some data representation transformation are applied at the IOs of the logic. The 
 latter are intended to move from a bundle representation to a columns representation (the `MSKbundle2cols` module) or 
@@ -337,9 +336,9 @@ inversely (the `MSKcols2bundle` module). These only consist in wiring modificati
 
 </div>
 
-A `MSKspook_sbox_dual` instance is implemented using dedicated logic for the sbox operation. The inverse sbox 
-operation is performed by reusing the sbox logic with two additional linear layers (`MSKpre_inv_sbox` before
-the sbox logic and `MSKpost_inv_sbox` after). In particular, the input of the sbox logic comes either 
+A `MSKspook_sbox_dual` instance is implemented using dedicated logic for the Sbox operation. The inverse Sbox 
+operation is performed by reusing the Sbox logic with two additional linear layers (`MSKpre_inv_sbox` before
+the sbox logic and `MSKpost_inv_sbox` after). In particular, the input of the Sbox logic comes either 
 from `MSKpre_inv_sbox` or from the instance input depending on the value of the `inverse` control signal. 
 Similarly, the output of the instance comes either from `MSKpost_inv_sbox` or from the output of the sbox.
 
@@ -350,10 +349,10 @@ Similarly, the output of the instance comes either from `MSKpost_inv_sbox` or fr
 </div>
 
 The amount of parallel `MSKspook_sbox_dual` instances lies in [1,2,4,8,16,32] and can be chosen with the 
-parameter `PDSBOX` (for Power Divider SBOX). The latter directly impacts the bus size `SIZE_REM_SB` and `SIZE_CHUNK_SB` as 
+parameter `PDSBOX` (for Power Divider SBOX). The latter directly impacts on the bus size of `SIZE_REM_SB` and `SIZE_CHUNK_SB`, as 
 well as the computation latency required. Finally, because of the specific architecture of the protected AND gates, 
-the sbox logic is implemented as a 3-levels pipeline. The induced latency is thus taken into account of an offset of 3 clock cycles. 
-The different configuration are summed up in the following table:
+the Sbox logic is implemented as a 3-levels pipeline. The induced latency is thus taken into account, requiring an offset of 3 clock cycles, as shown above. 
+The different configurations are summed up in the following table:
 
 <div align="center">
 
@@ -368,16 +367,22 @@ The different configuration are summed up in the following table:
 
 </div>
 
-## Simulations Scripts (unix-like)
+### Simulations Script (unix-like)
 
-As mentionned above, the [simu](spook_msk/simu) contains the :
+As mentionned above, the [simu](spook_msk/simu) contains the simulation script 
+[sim_spook_MSK.sh](spook_msk/simu/sim_spook_MSK.sh). The latter performs the following operations:
 
-+ **Testvectors generation**: this process is generating the different commands that will be sent to the 
-core based on the file specified. The latter should be formatted similarly to the NIST LWC testvectors files. 
-+ **Synthesis** *(optional)*: the design is synthetized using Yosys.
++ **Testvectors generation**: this process generates the different commands that will be sent to the 
+core based on the file specified. Those commands are formatted similarly to the NIST LWC testvectors files.
+This is done using the [gen_tv.py](spook_msk/spook_hw_api/gen_tv.py) script. 
 + **Simulation file building**: the simulation file is built using Iverilog.
 + **Simulation**: the simulation is performed using vvp.
 
-It may be required to change some scripts configurations. These are chosen at the beginning of each scripts 
+It may be required to change some scripts configurations. These are chosen at the beginning of each files 
 and are thus easily editable. 
+
+## CTF Data Sets
+
+In the context of the challenge, various data sets are available for each targets (i.e., using 2,3 and 4 shares). These sets contain
+power traces as well as the corresponding data processed. 
 
