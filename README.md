@@ -151,13 +151,13 @@ Associated Data (big endian ordering, 11 bytes long):
 
 <div align="center">
 
-| **Stream A** | **Stream B** | **Stream B**| 
+| **Stream A** | **Stream B** | **Stream C**| 
 |:--------------:|:--------------:|:-------------:|
 |head0(`dtype`=AD, `eot`=1, `length`=11)|head0(`dtype`=AD, `eot`=0, `length`=8)|head0(`dtype`=AD, `eot`=0, `length`=4)|
 |[B<sub>3</sub>,B<sub>2</sub>,B<sub>1</sub>,B<sub>0</sub>]|[B<sub>3</sub>,B<sub>2</sub>,B<sub>1</sub>,B<sub>0</sub>]|[B<sub>3</sub>,B<sub>2</sub>,B<sub>1</sub>,B<sub>0</sub>]|
 |[B<sub>7</sub>,B<sub>6</sub>,B<sub>5</sub>,B<sub>4</sub>]|[B<sub>7</sub>,B<sub>6</sub>,B<sub>5</sub>,B<sub>4</sub>]|head1(`dtype`=AD, `eot`=0, `length`=4)|
 |[X,B<sub>10</sub>,B<sub>9</sub>,B<sub>8</sub>]|head1(`dtype`=AD, `eot`=1, `length`=3)|[B<sub>7</sub>,B<sub>6</sub>,B<sub>5</sub>,B<sub>4</sub>]|
-| |[X,B<sub>10</sub>,B<sub>9</sub>,B<sub>8</sub>]| head1(`dtype`=AD, `eot`=1, `length`=3)|
+| |[X,B<sub>10</sub>,B<sub>9</sub>,B<sub>8</sub>]| head2(`dtype`=AD, `eot`=1, `length`=3)|
 | | |[X,B<sub>10</sub>,B<sub>9</sub>,B<sub>8</sub>]|
 
 </div>
