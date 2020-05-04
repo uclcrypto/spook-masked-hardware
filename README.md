@@ -11,7 +11,7 @@ LWC NIST competition. We provide a python library that generates from a high lev
 should be sent to the core in order to perform different operations (e.g., load the key, encryption, ...).
 The latter is used to generate the test vectors used in simulatations as well as the actual FPGA implementation. 
 
-_Note: no security claims comes with this code. It is a straightfoward implementation of state-of-the-art software masking scheme which security depends on various factors such masking order, independence 
+_Note: no security claims comes with this code. It is a straightfoward implementation of state-of-the-art hardware masking scheme which security depends on various factors such masking order, independence 
 assumption and noise level._
 
 ## Organisation
@@ -390,15 +390,54 @@ As mentionned above, the [simu](spook_msk/simu) contains the simulation script
 
 + **Testvectors generation**: this process generates the different commands that will be sent to the 
 core based on the file specified. Those commands are formatted similarly to the NIST LWC testvectors files.
-This is done using the [gen_tv.py](spook_msk/spook_hw_api/gen_tv.py) script. 
+This is done using the [gen_tv.py](spook_hw_api/gen_tv.py) script. Basically, this script uses a
+[spook_api_builder](spook_hw_api/spook_api_builder.py) instance to build the sucessive commands based on 
+a NIST LWC TVs file. These commands are then written in another file that is read during the simulation 
+process. 
 + **Simulation file building**: the simulation file is built using Iverilog.
 + **Simulation**: the simulation is performed using vvp.
 
-It may be required to change some scripts configurations. These are chosen at the beginning of each files 
-and are thus easily editable. 
+It may be required to change some scripts configurations (e.g., paths, ... ). More information about the simulation
+parameters and process flow can be found in the [sim_spook_MSK.sh](spook_msk/simu/sim_spook_MSK.sh) script.
 
 ## CTF Data Sets
 
-In the context of the challenge, various data sets are available for each targets (i.e., using 2,3 and 4 shares). These sets contain
-power traces as well as the corresponding data processed. 
+In the context of the challenge, various data sets are available for each targets (i.e., using 2,3 and 4 shares)
+Each set contains traces as well as the corresponding data processed. The measurements were performed on 
+a [Sakura-G board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) with an HW architecture generated with 
+`PDSBOX`=2 and `PDLBOX`=1. Six different sets are provided: 1 containing 10M traces with random inputs (typically used for profiling) and
+5 containing 5M traces with a (different per set) fixed key (typically used to evaluate an attack). All sets are
+splitted in different subfiles of 100k traces. 
+
+### Traces Description
+
+The available traces are raw current traces recorded with a [CT1 current probe](https://download.tek.com/datasheet/AC_Current_Probes.pdf).
+Only the first Clyde128 execution is recorder for each case. Next is shown a typical trace using 2 shares. 
+
+<div align="center">
+
+![MSKspook_sbox](/spook_msk/schematics/traced2.jpg)
+
+</div>
+
+### Files Description
+
+The trace are stored as a [.npz](https://imageio.readthedocs.io/en/stable/format_npz.html) file that contains
+the following fields:
++ `ram_in`: array containing the successive 32-bits commands sent to the HW core for each case. These 
+are stored as a long bytestrings. 
++ `msk_keys`: array containing the (masked) keys used. These are stored as d*16 bytes long 
+bytestrings. 
++ `umsk_keys`: array containing the (unmasked) keys used. These are stored as 16 bytes long 
+bytestrings.
++ `s0`: array containing the seed used to generate the key refresh randomness. These are stored as 16 
+bytes long bytestrings.
++ `s1`: array containing the seed used to generate the first randomness of the sbox layer. These are stored as 16 
+bytes long bytestrings.
++ `s2`: array containing the seed used to generate the second randomness of the sbox layer. These are stored as 16 
+bytes long bytestrings.
++ `nonce`: array containing the nonce used. These are stored as 16 bytes long bytestrings.
++ `traces`: array containing the traces measured. These are stored as vector of np.int16.
++ `traces_amount`: the amount of traces contained in the file. This is practically the length
+of each array.
 
