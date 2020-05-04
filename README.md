@@ -441,3 +441,6 @@ bytes long bytestrings.
 + `traces_amount`: the amount of traces contained in the file. This is practically the length
 of each array.
 
+Based on these data, it is possible to recover the internal masked states for each computation. 
+To do so, we rely on the [Verilator tool](https://www.veripool.org/wiki/verilator), as explained 
+[here](https://git-crypto.elen.ucl.ac.be/obronchain/ctf-analysis/-/blob/attacks/HW/simulations/PROBE.md).
