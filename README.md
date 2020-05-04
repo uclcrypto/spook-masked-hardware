@@ -1,15 +1,16 @@
 # **Spook Hardware Implementations**
 
 This repository contains all the files relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
-the Hardware-oriented version of Capture the Flag. A practical implementation was done on 
+the Hardware-oriented version of the Capture the Flag. A practical implementation was done on 
 a [Sakura-G board](http://satoh.cs.uec.ac.jp/SAKURA/hardware/SAKURA-G.html) which was used to generate the
 datasets (currently available on the [Spook website](https://www.spook.dev/)).
 
 The hardware core follows a custom API broadly based
 on the [LWC HW API](https://cryptography.gmu.edu/athena/LWC/LWC_HW_API.pdf), proposed in the context of the 
-LWC NIST competition. We provide a python library that generates from a high level the data that 
-should be sent to the core in order to perform different operations (e.g., load the key, encryption, ...).
-The latter is used to generate the test vectors used in simulatations as well as the actual FPGA implementation. 
+[LWC NIST competition](https://csrc.nist.gov/projects/lightweight-cryptography). We provide a python library that 
+generates from a high level the data that should be sent to the core in order to perform different 
+operations (e.g., load the key, encryption, ...). The latter is used to generate the test vectors used 
+in simulatations as well as the actual FPGA implementation. 
 
 _Note: no security claims comes with this code. It is a straightfoward implementation of state-of-the-art hardware masking scheme which security depends on various factors such masking order, independence 
 assumption and noise level._
@@ -224,7 +225,8 @@ It receives digested data from the datapath module. It also encodes digested dat
 ## Spook Protected Architecture
 
 The architecture of the datapath for the protected Spook HW core is here presented in detail. The main difference with 
-the unprotected case is that the Clyde primitive is designed implementing countermeasures against Side-Channel-Attacks (SCAs). This implementation makes use of masking with [Cassiers et al.](https://eprint.iacr.org/2020/185) scheme. 
+the unprotected case is that the Clyde primitive is designed implementing countermeasures against Side-Channel-Attacks (SCAs). 
+This implementation makes use of masking with [Cassiers et al.](https://eprint.iacr.org/2020/185) scheme. 
 Additionally, the long term key is stored as a sharing instead of raw data. 
 Last but not least, the tag verification process is performed using the inverse operation of Clyde. 
 
@@ -242,10 +244,10 @@ layers. This allows to significantly reduce the implementation cost comparing to
 While the provided core implements the architecture described above, it offers the possibility to set 
 the amount of parallel Sboxes and Lboxes in the masked Clyde core. The amount of share is also editable. 
 This is done by modifying the following generation parameters in 
-the [datapath](/SpookMasked/hdl/mode_hdl/datapath.v) file:
+the [spook_MSK.v](spook_msk/hdl/mode_hdl/spook_MSK.v) file:
 + `d`: the amount of share used. 
-+ `PDSBOX`: more info related to this parameter in the [MSKclyde_128_1R](/SpookMasked/hdl/clyde_MSK_SB3c/MSKclyde_128_1R.v) file.
-+ `PDLBOX`: more info related to this parameter in the [MSKclyde_128_1R](/SpookMasked/hdl/clyde_MSK_SB3c/MSKclyde_128_1R.v) file.
++ `PDSBOX`: more info related to this parameter in the [MSKclyde_128_1R](spook_msk/hdl/clyde_MSK_SB3c/MSKclyde_128_1R.v) file.
++ `PDLBOX`: more info related to this parameter in the [MSKclyde_128_1R](spook_msk/hdl/clyde_MSK_SB3c/MSKclyde_128_1R.v) file.
 
 ### Protected Clyde core
 The protected version of Clyde is implemented using the masking countermeasure. The masking scheme considered
@@ -278,7 +280,7 @@ implicitly present in the `MSKaddWTK` module developed next.
 
 An execution of Clyde128 starts with a tweakey addition, as well as a 
 constant addition in the case of a decryption. These are performed by the `MSKaddWTK` module. The latter takes as input the key sharing,
-the appropriate $`\delta`$ value use to compute the tweakey (denoted `delta_TWK`), the constant W (denoted 'W') and offers the 
+the appropriate $`\delta`$ value use to compute the tweakey (denoted `delta_TWK`), the constant W (denoted `W`) and offers the 
 possibility to perform each addition independently. The signals `delta_TWK` and `W` come from specific modules (respectively 
 `phi_unit_dual` and `Wsel_lfsr_dual`) that compute the corresponding public constants. 
 
@@ -371,7 +373,7 @@ The different configurations are summed up in the following table:
 </div>
 
 The specific (and quite difficult) architure of a `MSKspook_sbox` instance is shown next. The labels used
-directly reflect the related HDL code. Each color used represent a level in the pipeline. 
+directly reflect the related HDL code. Each color represents a level in the pipeline. 
 A specificity is to be noted for the AND gates: these are implemented with one pipeline level and two 
 different latencies for the inputs. More especially, the inputs are expected to enter the 
 core at two successive clock cycles. Denoting these cycles c<sub>0</sub> and c<sub>1</sub>, the gate is 
@@ -412,7 +414,7 @@ splitted in different subfiles of 100k traces.
 ### Traces Description
 
 The available traces are raw current traces recorded with a [CT1 current probe](https://download.tek.com/datasheet/AC_Current_Probes.pdf).
-Only the first Clyde128 execution is recorder for each case. Next is shown a typical trace using 2 shares. 
+Only the first Clyde128 execution is recorded for each case. Next is shown a typical trace using 2 shares. 
 
 <div align="center">
 
