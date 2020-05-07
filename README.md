@@ -441,8 +441,7 @@ bytes long bytestrings.
 bytes long bytestrings.
 + `nonce`: array containing the nonce used. These are stored as 16 bytes long bytestrings.
 + `traces`: array containing the traces measured. These are stored as vector of np.int16.
-+ `traces_amount`: the amount of traces contained in the file. This is practically the length
-of each array.
+
 
 Based on these data, it is possible to recover the internal masked states for each computation. 
 To do so, we rely on the [Verilator tool](https://www.veripool.org/wiki/verilator), as explained 
