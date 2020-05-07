@@ -1,4 +1,19 @@
 /*
+    Copyright 2020 UCLouvain
+
+    Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://solderpad.org/licenses/SHL-2.0/
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+/*
     Change the data representation.
     Considering the input bundle as 
         bundle_in = [ b3[127:96] | b2[95:64] | b1[63:32] | b0[31:0] ]
