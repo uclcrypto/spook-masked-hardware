@@ -21,7 +21,7 @@ module spook_MSK
 (
     parameter BUS_SIZE = 32,
     parameter r = 256,
-    parameter d = 4,
+    parameter d = 2,
     parameter PDSBOX=2,
     parameter PDLBOX=1,
     parameter n = 128
