@@ -1,4 +1,4 @@
-# **Spook Hardware Implementations**
+# **Spook Hardware Implementation**
 
 This repository contains all the files relative to the protected HW implementations of [Spook](https://www.spook.dev/) used for 
 the Hardware-oriented version of the Capture the Flag. A practical implementation was done on 
@@ -444,8 +444,8 @@ bytes long bytestrings.
 
 
 Based on these data, it is possible to recover the internal masked states for each computation. 
-To do so, we rely on the [Verilator tool](https://www.veripool.org/wiki/verilator), as explained 
-[here](https://git-crypto.elen.ucl.ac.be/obronchain/ctf-analysis/-/blob/attacks/HW/simulations/PROBE.md).
+To do so, we rely on the [Verilator tool](https://www.veripool.org/wiki/verilator). This process is more
+detailed in the [demo_submission package]{https://ctf.spook.dev/}.
 
 
 
