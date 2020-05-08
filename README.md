@@ -445,7 +445,7 @@ bytes long bytestrings.
 
 Based on these data, it is possible to recover the internal masked states for each computation. 
 To do so, we rely on the [Verilator tool](https://www.veripool.org/wiki/verilator). This process is more
-detailed in the [demo_submission package]{https://ctf.spook.dev/}.
+detailed in the [demo_submission package](https://ctf.spook.dev/).
 
 
 
