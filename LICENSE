@@ -1,13 +1,13 @@
 Spook HW CTF
 
-This work has been developped by Gaëtan Cassiers, Itamar Levi & Charles Momin at UCLOUVAIN
+This work has been developped by Gaëtan Cassiers, Itamar Levi & Charles Momin at UCLouvain
 
 Unless noted otherwise subsequently or in the files in question the
 following licenses apply:
 
 -All files in the "spook_msk/hdl" directory and its subdirectories are 
-licensed under the Solderpad Hardware Licence (SHL) Version 2.0, as defined 
-in the file "SHL-2.0.html".
+licensed under the Solderpad Hardware Licence (SHL) Version 2.0. A copy of 
+the license can be found at https://solderpad.org/licenses/SHL-2.0/
 
 -All files in the "spook_hw_api", "spook_msk/simu" and "spook_msk/tb" directories are
 licensed under the MIT License as defined in the file "LICENCE_MIT.txt"
